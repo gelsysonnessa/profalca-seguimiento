@@ -134,19 +134,21 @@
   .sec{border-top:1px solid var(--line);padding:12px 0}
   .sec:first-child{border-top:0}
   .sec h4{margin:0 0 4px;font:600 17px var(--f-display);display:flex;gap:10px;justify-content:space-between;align-items:baseline}
-  .sec .body p{margin:.3em 0}.sec .body ul{margin:.3em 0;padding-left:1.2em}
+  .sec .body p{margin:.3em 0;text-align:justify;text-justify:inter-word}.sec .body ul{margin:.3em 0;padding-left:1.2em}
+  .sec .body li{text-align:justify;text-justify:inter-word}
   .body{max-width:80ch}
   .paperwrap{overflow-x:auto}
   .paper{background:var(--paper);color:var(--paper-ink);border:1px solid var(--line);padding:36px 40px;max-width:860px;margin:0 auto;font:14px/1.5 Arial,Helvetica,sans-serif}
   .paper h1{font:700 20px Arial,sans-serif;margin:0 0 10px}
   .paper h2{font:700 15px Arial,sans-serif;margin:22px 0 6px;text-transform:uppercase}
   .paper h3{font:700 14px Arial,sans-serif;margin:14px 0 4px}
-  .paper p{margin:4px 0}.paper ul{margin:4px 0;padding-left:22px}
+  .paper p{margin:4px 0;text-align:justify;text-justify:inter-word}.paper ul{margin:4px 0;padding-left:22px}
+  .paper li{text-align:justify;text-justify:inter-word}
   .paper table{border:1px solid var(--paper-line);margin:8px 0;font-size:12.5px}
   .paper th{background:var(--paper-head);color:var(--paper-ink);border:1px solid var(--paper-line);font:700 12px Arial,sans-serif;letter-spacing:0;text-transform:none;white-space:normal}
   .paper td{border:1px solid var(--paper-line);vertical-align:top}
   .paper .hd{background:var(--paper-head);border:1px solid var(--paper-line);padding:8px 10px;font-weight:700;text-align:center;margin-top:26px}
-  .paper .nota{border:1px solid var(--paper-line);padding:8px 12px;margin:10px 0}
+  .paper .nota{border:1px solid var(--paper-line);padding:8px 12px;margin:10px 0;text-align:justify;text-justify:inter-word}
   #modal{position:fixed;inset:0;z-index:50;background:rgba(8,16,22,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
   #modal.on{display:flex}
   .dlg{background:var(--surface);border:1px solid var(--line);width:min(720px,100%);padding:20px;margin-block:auto}
@@ -172,9 +174,34 @@
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">
-      <b>PROFALCA</b>
-      <span>Seguimiento de pre-arranque</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <!-- Silueta minimalista de planta industrial PROFALCA -->
+      <svg width="44" height="44" viewBox="0 0 48 48" fill="none" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
+        <!-- Base de la planta industrial -->
+        <line x1="3" y1="43" x2="45" y2="43" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Columna de fraccionamiento / Destilación C-1101 -->
+        <rect x="7" y="10" width="10" height="33" rx="2" stroke="#FFFFFF" stroke-width="2" fill="rgba(255,255,255,0.12)"/>
+        <line x1="7" y1="17" x2="17" y2="17" stroke="#38BDF8" stroke-width="1.5"/>
+        <line x1="7" y1="24" x2="17" y2="24" stroke="#38BDF8" stroke-width="1.5"/>
+        <line x1="7" y1="31" x2="17" y2="31" stroke="#38BDF8" stroke-width="1.5"/>
+        <!-- Cúpula superior de la columna -->
+        <path d="M7 10C7 6.5 17 6.5 17 10" stroke="#FFFFFF" stroke-width="2" fill="none"/>
+        <!-- Tubería de proceso / Vértice de 8" a tope -->
+        <path d="M17 14H24V43" stroke="#38BDF8" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- Reactor / Columna secundaria -->
+        <rect x="23" y="18" width="11" height="25" rx="2" stroke="#FFFFFF" stroke-width="2" fill="rgba(56,189,248,0.18)"/>
+        <circle cx="28.5" cy="25" r="2.5" stroke="#38BDF8" stroke-width="1.5" fill="none"/>
+        <!-- Tanque esférico / Domo de almacenamiento -->
+        <path d="M35 27C37 23 44 23 44 30V43H34" stroke="#FFFFFF" stroke-width="2" fill="rgba(255,255,255,0.08)"/>
+        <!-- Chimenea / Antorcha de seguridad -->
+        <line x1="40" y1="16" x2="40" y2="27" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+        <!-- Llama minimalista de seguridad -->
+        <path d="M38.5 15C39.2 12.5 40 11 40 9C40 11 40.8 12.5 41.5 15C41 16 39 16 38.5 15Z" fill="#FBBF24" stroke="#F59E0B" stroke-width="0.8"/>
+      </svg>
+      <div class="brand">
+        <b>PROFALCA</b>
+        <span>Seguimiento de pre-arranque</span>
+      </div>
     </div>
     <nav id="nav" aria-label="Secciones"></nav>
     <div class="user-box" id="userBox">
@@ -448,10 +475,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const M3 = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-const ACT_EST = ['Pendiente','En proceso','Bloqueado','Completado'];
-const ENT_EST = ['Próxima entrega','En proceso','Pendiente','Bloqueado','Completado'];
-const KEY = {'Pendiente':'idle','En proceso':'info','Bloqueado':'crit','Completado':'ok','Próxima entrega':'warn'};
-const COL = {'Pendiente':'#64748B','En proceso':'#0284C7','Bloqueado':'#DC2626','Completado':'#16A34A','Próxima entrega':'#D97706'};
+const ACT_EST = ['Próxima entrega','En proceso','Bloqueado','Pendiente','Completado'];
+const ENT_EST = ['Próxima entrega','En proceso','Bloqueado','Pendiente','Completado'];
+const STATUS_ORDER = {
+  'Próxima entrega': 1,
+  'En proceso': 2,
+  'Bloqueado': 3,
+  'Pendiente': 4,
+  'Completado': 5
+};
+const statusRank = s => STATUS_ORDER[s] || 99;
+const KEY = {'Próxima entrega':'warn','En proceso':'info','Bloqueado':'crit','Pendiente':'idle','Completado':'ok'};
+const COL = {'Próxima entrega':'#D97706','En proceso':'#0284C7','Bloqueado':'#DC2626','Pendiente':'#64748B','Completado':'#16A34A'};
 const pill = e => `<span class="pill s-${KEY[e]||'idle'}">${esc(e||'—')}</span>`;
 const pd = s => {const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)};
 const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -476,28 +511,43 @@ let myName = localStorage.getItem('pf_user_name') || 'Gelsy';
 const S = { acts:[], meetings:[], entries:[], agreements:[], log:[], config:{} };
 const loaded = {};
 let view = 'tablero', selM = null, sub = 'resumen';
-const F = { q:'', est:'', sis:'', batch:'', flag:'' };
+const F = { q:'', est:'', sis:'', batch:'', flag:'', meetQ:'', bq:'', bm:'', be:'', bs:'' };
 
-try{let v=localStorage.getItem('pf_view');if(v==='acuerdos')v='plan';if(v)view=v}catch(e){}
+try{
+  let v = localStorage.getItem('pf_view');
+  if(v==='acuerdos'||v==='plan') v='bitacora';
+  if(v) view=v;
+}catch(e){}
 const h=(location.hash||'').slice(1);
-if(['tablero','actividades','reuniones','plan','acuerdos','ajustes'].includes(h)) view = (h === 'acuerdos' ? 'plan' : h);
+if(['tablero','actividades','reuniones','bitacora','plan','acuerdos','ajustes'].includes(h)){
+  view = (h === 'acuerdos' || h === 'plan') ? 'bitacora' : h;
+}
 
 const VIEWS = [
   ['tablero','Tablero'],
   ['actividades','Actividades'],
   ['reuniones','Reuniones'],
-  ['plan','Plan de trabajo'],
+  ['bitacora','Bitácora de reuniones'],
   ['ajustes','Ajustes e historial']
 ];
 
-const sortedActs = () => [...S.acts].sort((a,b) => (a.prio??9999)-(b.prio??9999) || actNum(a._id)-actNum(b._id));
+// Ordenar actividades por estatus (Próxima entrega -> En proceso -> Bloqueado -> Pendiente -> Completado)
+const sortedActs = () => [...S.acts].sort((a,b) => {
+  const diff = statusRank(a.estatus) - statusRank(b.estatus);
+  if(diff !== 0) return diff;
+  return (a.prio??9999)-(b.prio??9999) || actNum(a._id)-actNum(b._id);
+});
 const sortedMeets = () => [...S.meetings].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
 const actById = id => S.acts.find(a => a._id === id);
 const prog = a => a.avance!=null && a.avance!=='' ? Number(a.avance) : (a.estatus==='Completado'?100:0);
 const isDone = a => a.estatus === 'Completado';
 const isOver = a => a.fechaObj && !isDone(a) && a.fechaObj < today();
 const isBlocked = a => !isDone(a) && (a.estatus === 'Bloqueado' || !!a.bloqueo);
-const sortedEntries = mid => S.entries.filter(e => e.meetingId === mid).sort((a,b)=>(a.ord??0)-(b.ord??0)||actNum(a.actId)-actNum(b.actId));
+const sortedEntries = mid => S.entries.filter(e => e.meetingId === mid).sort((a,b) => {
+  const diff = statusRank(a.estatus) - statusRank(b.estatus);
+  if(diff !== 0) return diff;
+  return (a.ord??0)-(b.ord??0) || actNum(a.actId)-actNum(b.actId);
+});
 
 /* ---------- Mensajes y Notificaciones ---------- */
 function toast(t){
@@ -562,10 +612,43 @@ function saveFile(filename, data) {
 let raf = 0;
 function sched(){ cancelAnimationFrame(raf); raf = requestAnimationFrame(render); }
 
+let isSyncingActs = false;
+async function syncActsWithLatestRSE() {
+  if (isSyncingActs || !db || !S.acts || !S.acts.length || !S.entries || !S.entries.length) return;
+  isSyncingActs = true;
+  try {
+    const meetsMap = new Map((S.meetings||[]).map(m => [m._id, m]));
+    for (const a of S.acts) {
+      const entries = S.entries.filter(e => e.actId === a._id);
+      if (!entries.length) continue;
+      entries.sort((x, y) => {
+        const mx = meetsMap.get(x.meetingId), my = meetsMap.get(y.meetingId);
+        const dx = mx ? mx.fecha : '0000-00-00', dy = my ? my.fecha : '0000-00-00';
+        return dy.localeCompare(dx) || (y.ord || 0) - (x.ord || 0);
+      });
+      const latest = entries[0];
+      if (latest && latest.estatus && a.estatus !== latest.estatus) {
+        console.log(`Harmonizando estatus ${a._id}: ${a.estatus} -> ${latest.estatus}`);
+        a.estatus = latest.estatus;
+        const up = { estatus: latest.estatus };
+        if (latest.estatus === 'Completado' && (a.avance === null || a.avance < 100)) up.avance = 100;
+        await db.doc('acts/' + a._id).set(up, { merge: true });
+      }
+    }
+  } catch(err) {
+    console.warn('Error en syncActsWithLatestRSE:', err);
+  } finally {
+    isSyncingActs = false;
+  }
+}
+
 function sub1(name, q){
   q.onSnapshot(s => {
     S[name] = s.docs.map(d => ({ _id: d.id, ...d.data() }));
     loaded[name] = 1;
+    if (loaded.acts && loaded.entries) {
+      syncActsWithLatestRSE();
+    }
     sched();
     $('#statusDot').className = 'status-dot';
   }, e => {
@@ -719,8 +802,9 @@ function render(){
     tablero: vTablero,
     actividades: vActs,
     reuniones: vMeets,
-    plan: vPlan,
-    acuerdos: vPlan,
+    bitacora: vBitacora,
+    plan: vBitacora,
+    acuerdos: vBitacora,
     ajustes: vSet
   };
   const renderFn = viewMap[view] || vTablero;
@@ -864,8 +948,13 @@ function vActs(){
   const list = filteredActs();
   const opt = (arr,v) => arr.map(x => `<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
 
-  return `<div class="pagehead"><h2>Actividades <span class="muted" style="font-size:18px">${list.length}/${S.acts.length}</span></h2>
-   <div class="row"><button class="btn" data-a="xlsx">Exportar a Excel</button><button class="btn pri" data-a="newAct">+ Nueva actividad</button></div></div>
+  return `<div class="pagehead">
+    <div>
+      <h2>Actividades <span class="muted" style="font-size:18px">${list.length}/${S.acts.length}</span></h2>
+      <p class="note" style="margin:2px 0 0">Ordenadas por prioridad: <b>Próxima entrega ➔ En proceso ➔ Bloqueado ➔ Pendiente ➔ Completado</b></p>
+    </div>
+    <div class="row"><button class="btn" data-a="xlsx">Exportar a Excel</button><button class="btn pri" data-a="newAct">+ Nueva actividad</button></div>
+  </div>
   <div class="filters">
    <input id="fq" data-f="q" placeholder="Buscar por ID, actividad o responsable..." value="${esc(F.q)}" style="flex:1;min-width:200px">
    <select id="fe" data-f="est"><option value="">Todos los estatus</option>${opt(ACT_EST,F.est)}</select>
@@ -921,6 +1010,14 @@ function actModal(id){
     if(!d.title) throw new Error('Escribe el nombre de la actividad.');
     if(a){
       await wupd('acts', a._id, d, `Actualizó ${a._id}`);
+      // Sincronizar también con la última entrada de RSE si existe
+      const latestEntries = S.entries.filter(e => e.actId === a._id);
+      if(latestEntries.length){
+        const latestE = latestEntries.sort((x,y) => (y.ord||0)-(x.ord||0))[0];
+        if(latestE && latestE.estatus !== d.estatus){
+          await wupd('entries', latestE._id, { estatus: d.estatus }, `Sincronizó RSE con ${d.estatus}`);
+        }
+      }
     } else {
       const nid = g('id').toUpperCase();
       if(!/^[A-Z0-9-]+$/.test(nid)) throw new Error('El ID solo puede contener letras, números y guiones.');
@@ -932,12 +1029,29 @@ function actModal(id){
 }
 
 /* ---------- Vistas: Reuniones ---------- */
-function curMeet(){ const ms = sortedMeets(); return S.meetings.find(m => m._id === selM) || ms[0] || null; }
+function curMeet(){
+  const ms = sortedMeets();
+  return S.meetings.find(m => m._id === selM) || ms[0] || null;
+}
 
 function vMeets(){
-  const ms = sortedMeets(), m = curMeet();
-  const left = `<div><button class="btn pri" style="width:100%;margin-bottom:10px" data-a="newMeet">+ Nueva reunión</button>
-   <div class="mlist">${ms.map(x => `<button data-a="goMeet" data-id="${x._id}" class="${m&&m._id===x._id?'on':''}"><b>${x.num?'Minuta '+esc(x.num):'Reunión'}</b><span>${fLong(x.fecha)}</span></button>`).join('') || '<div class="empty">Sin reuniones.</div>'}</div></div>`;
+  const ms = sortedMeets();
+  const q = (F.meetQ||'').toLowerCase().trim();
+  const filteredMs = ms.filter(x => !q || (('minuta ' + (x.num||'') + ' ' + (x.fecha||'') + ' ' + (x.objetivo||'') + ' ' + (x.participantes||[]).join(' ')).toLowerCase().includes(q)));
+  
+  let m = S.meetings.find(x => x._id === selM);
+  if (!m || (q && !filteredMs.some(x => x._id === m._id))) {
+    m = filteredMs[0] || null;
+  }
+
+  const left = `<div>
+    <button class="btn pri" style="width:100%;margin-bottom:8px" data-a="newMeet">+ Nueva reunión</button>
+    <div style="position:relative;margin-bottom:8px">
+      <input id="f_meetQ" data-f="meetQ" placeholder="🔍 Filtrar minutas..." value="${esc(F.meetQ||'')}" style="width:100%;font-size:13px;padding:6px 9px">
+      ${F.meetQ ? `<button style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px" data-a="clearMeetQ">✕</button>` : ''}
+    </div>
+    <div class="mlist">${filteredMs.map(x => `<button data-a="goMeet" data-id="${x._id}" class="${m&&m._id===x._id?'on':''}"><b>${x.num?'Minuta '+esc(x.num):'Reunión'}</b><span>${fLong(x.fecha)}</span></button>`).join('') || '<div class="empty" style="padding:14px">No se encontraron minutas.</div>'}</div>
+  </div>`;
 
   if(!m) return `<div class="pagehead"><h2>Reuniones</h2></div><div class="split">${left}<div class="panel empty">Crea la primera reunión para empezar la bitácora y la minuta.</div></div>`;
 
@@ -1034,8 +1148,8 @@ function minutaHTML(m){
 }
 function tPrevia(m){ return `<div class="paperwrap"><div class="paper" id="paper">${minutaHTML(m)}</div></div>`; }
 
-/* ---------- Vistas: Acuerdos Generales ---------- */
-function vPlan(){
+/* ---------- Vistas: Bitácora de Reuniones ---------- */
+function vBitacora(){
   const meetsMap = new Map(S.meetings.map(m => [m._id, m]));
   const actsMap = new Map();
 
@@ -1073,8 +1187,10 @@ function vPlan(){
       type: 'act',
       actId: actId,
       entryId: latest.entry._id,
+      meetingId: latest.meeting ? latest.meeting._id : '',
       meetingDate: latest.date,
       meetingNum: latest.meeting ? latest.meeting.num : '',
+      sistema: a ? a.sistema : '',
       title: a ? a.title : ('Actividad ' + actId),
       detail: latest.entry.nota || (a ? a.riesgo : ''),
       resp: a ? a.responsable : (latest.meeting ? latest.meeting.responsable : ''),
@@ -1100,8 +1216,10 @@ function vPlan(){
       type: 'agr',
       actId: matchedId || '',
       agrId: ag._id,
+      meetingId: m ? m._id : '',
       meetingDate: m ? m.fecha : '',
       meetingNum: m ? m.num : '',
+      sistema: 'General',
       title: ag.texto,
       detail: ag.cond,
       resp: ag.resp,
@@ -1112,34 +1230,49 @@ function vPlan(){
     });
   });
 
-  // Unificar: pendientes primero, luego completados
-  const L = [...actItems, ...agrItems].sort((a,b) => (a.done?1:0)-(b.done?1:0) || (b.meetingDate||'').localeCompare(a.meetingDate||''));
-  const open = L.filter(x => !x.done).length;
+  const allItems = [...actItems, ...agrItems];
 
-  return `<div class="pagehead">
-    <div>
-      <h2>Plan de Trabajo <span class="muted" style="font-size:18px">${open} pendientes de ${L.length}</span></h2>
-      <p class="note" style="margin:2px 0 0">Vista unificada sin duplicados. Cada actividad aparece <b>una sola vez</b> con su estado actual y la trazabilidad de cada minuta.</p>
-    </div>
-  </div>
-  <div class="tw"><table><thead><tr>
-    <th>Última Minuta</th>
-    <th style="min-width:85px">ID</th>
-    <th>Actividad</th>
-    <th>Qué se entrega (Notas PROFALCA)</th>
-    <th>Responsable</th>
-    <th>Estatus actual</th>
-    <th style="min-width:180px">Trazabilidad por Minuta</th>
-    <th style="text-align:center">Cumplido</th>
-  </tr></thead><tbody>
-  ${L.length ? L.map(x => `
-    <tr class="${x.done ? 'muted' : ''}">
+  // Aplicar filtros
+  const bq = (F.bq||'').toLowerCase().trim();
+  const filtered = allItems.filter(x => {
+    if (bq && !(x.actId + ' ' + x.title + ' ' + (x.detail||'') + ' ' + (x.resp||'')).toLowerCase().includes(bq)) return false;
+    if (F.bm && x.meetingId !== F.bm) return false;
+    if (F.be && x.estatus !== F.be) return false;
+    if (F.bs && x.sistema !== F.bs) return false;
+    return true;
+  });
+
+  // Dividir entre pendientes y completadas
+  const activeItems = filtered.filter(x => !x.done);
+  const doneItems = filtered.filter(x => x.done);
+
+  // Ordenar actividades activas:
+  // 1. Próxima entrega, 2. En proceso, 3. Bloqueado, 4. Pendiente (y dentro de eso fecha de reunión más reciente)
+  activeItems.sort((a,b) => {
+    const sDiff = statusRank(a.estatus) - statusRank(b.estatus);
+    if (sDiff !== 0) return sDiff;
+    const dDiff = (b.meetingDate||'').localeCompare(a.meetingDate||'');
+    if (dDiff !== 0) return dDiff;
+    return actNum(a.actId) - actNum(b.actId);
+  });
+
+  // Ordenar completadas por fecha más reciente de reunión
+  doneItems.sort((a,b) => (b.meetingDate||'').localeCompare(a.meetingDate||'') || actNum(a.actId) - actNum(b.actId));
+
+  const totalOpen = allItems.filter(x => !x.done).length;
+  const sistemasList = [...new Set(allItems.map(x => x.sistema).filter(Boolean))].sort();
+  const meetingsList = sortedMeets();
+  const opt = (arr, v) => arr.map(x => `<option value="${esc(x)}" ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+
+  const renderTableRows = (items, isDoneSection) => items.map(x => `
+    <tr class="${isDoneSection ? 'muted' : ''}" style="${isDoneSection ? 'background:rgba(22,163,74,0.02)' : ''}">
       <td class="mono" style="white-space:nowrap">${x.meetingDate ? (x.meetingNum ? 'Minuta '+x.meetingNum+' · ' : '') + fShort(x.meetingDate) : '—'}</td>
       <td>${x.actId ? `<button class="btn sm" data-a="openAct" data-id="${x.actId}" style="font-weight:700;color:var(--accent);font-family:var(--f-mono)">${esc(x.actId)}</button>` : '<span class="mono muted">GRAL</span>'}</td>
-      <td style="min-width:200px;${x.done?'text-decoration:line-through':''}">
+      <td style="min-width:210px;${isDoneSection?'text-decoration:line-through;color:var(--muted)':''}">
         <b>${esc(x.title)}</b>
+        ${x.sistema ? `<div class="note" style="font-size:11.5px">${esc(x.sistema)}</div>` : ''}
       </td>
-      <td style="min-width:260px;font-size:13.5px">${esc(x.detail)}</td>
+      <td style="min-width:250px;font-size:13.5px">${esc(x.detail)}</td>
       <td>${esc(x.resp||'—')}</td>
       <td>${pill(x.estatus)}</td>
       <td>
@@ -1155,12 +1288,84 @@ function vPlan(){
         ` : (x.history && x.history.length === 1 ? `<span class="note">${x.history[0].mLabel}: ${x.history[0].estatus}</span>` : '<span class="muted">—</span>')}
       </td>
       <td style="text-align:center">
-        <input type="checkbox" data-a="${x.type === 'act' ? 'togRse' : 'togAgr'}" data-id="${x.type === 'act' ? x.entryId : x.agrId}" ${x.done ? 'checked' : ''} aria-label="Cumplido">
+        <input type="checkbox" data-a="${x.type === 'act' ? 'togRse' : 'togAgr'}" data-id="${x.type === 'act' ? x.entryId : x.agrId}" ${x.done ? 'checked' : ''} aria-label="Cumplido" title="Marcar como cumplido / completado">
       </td>
     </tr>
-  `).join('') : '<tr><td colspan="8" class="empty">No hay actividades registradas en el plan de trabajo.</td></tr>'}
-  </tbody></table></div>
-  <p class="note">Al actualizar una actividad en cualquier reunión, el estado y su trazabilidad histórica se sincronizan automáticamente.</p>`;
+  `).join('');
+
+  return `
+  <div class="pagehead">
+    <div>
+      <h2>Bitácora de Reuniones <span class="muted" style="font-size:18px">${totalOpen} pendientes de ${allItems.length}</span></h2>
+      <p class="note" style="margin:2px 0 0">Vista unificada de acuerdos y entregables de cada minuta con trazabilidad histórica completa.</p>
+    </div>
+    <div class="row">
+      <button class="btn" data-a="xlsx">Exportar a Excel</button>
+    </div>
+  </div>
+
+  <!-- Herramientas de Filtro de Bitácora -->
+  <div class="filters" style="margin-bottom:14px">
+    <input id="f_bq" data-f="bq" placeholder="🔍 Buscar por ID, actividad o notas..." value="${esc(F.bq||'')}" style="flex:1;min-width:200px">
+    <select id="f_bm" data-f="bm">
+      <option value="">Todas las minutas</option>
+      ${meetingsList.map(m => `<option value="${m._id}" ${F.bm===m._id?'selected':''}>Minuta ${m.num||''} (${fShort(m.fecha)})</option>`).join('')}
+    </select>
+    <select id="f_be" data-f="be">
+      <option value="">Todos los estatus</option>
+      ${opt(ACT_EST, F.be)}
+    </select>
+    <select id="f_bs" data-f="bs">
+      <option value="">Todos los sistemas</option>
+      ${opt(sistemasList, F.bs)}
+    </select>
+    ${(F.bq||F.bm||F.be||F.bs) ? `<button class="btn sm" data-a="clearBFilters">Limpiar filtros</button>` : ''}
+  </div>
+
+  <!-- Sección 1: Actividades en Seguimiento (Pendientes / En proceso / Próxima entrega) -->
+  <div class="panel" style="margin-bottom:20px;border-top:3px solid var(--accent)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="margin:0;font-size:16px;color:var(--ink);text-transform:none;letter-spacing:0">
+        Actividades en Seguimiento (${activeItems.length})
+      </h3>
+      <span class="note" style="font-size:12px">Prioridad: Próxima entrega ➔ En proceso ➔ Bloqueado ➔ Pendiente</span>
+    </div>
+    <div class="tw"><table><thead><tr>
+      <th>Última Minuta</th>
+      <th style="min-width:85px">ID</th>
+      <th>Actividad</th>
+      <th>Qué se entrega (Notas PROFALCA)</th>
+      <th>Responsable</th>
+      <th>Estatus actual</th>
+      <th style="min-width:180px">Trazabilidad por Minuta</th>
+      <th style="text-align:center">Cumplido</th>
+    </tr></thead><tbody>
+      ${activeItems.length ? renderTableRows(activeItems, false) : '<tr><td colspan="8" class="empty">No hay actividades en seguimiento con los filtros actuales.</td></tr>'}
+    </tbody></table></div>
+  </div>
+
+  <!-- Sección 2: Actividades Completadas / Entregadas (Separadas visualmente al final) -->
+  <div class="panel" style="border-top:3px solid var(--ok);background:rgba(22,163,74,0.02)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <h3 style="margin:0;font-size:16px;color:var(--ok);text-transform:none;letter-spacing:0">
+        ✓ Actividades Completadas / Entregadas (${doneItems.length})
+      </h3>
+      <span class="pill s-ok" style="font-size:11px">${doneItems.length} finalizadas</span>
+    </div>
+    <div class="tw"><table><thead><tr>
+      <th>Minuta Cierre</th>
+      <th style="min-width:85px">ID</th>
+      <th>Actividad</th>
+      <th>Entregable final / Observación</th>
+      <th>Responsable</th>
+      <th>Estatus</th>
+      <th style="min-width:180px">Trazabilidad Histórica</th>
+      <th style="text-align:center">Reabrir</th>
+    </tr></thead><tbody>
+      ${doneItems.length ? renderTableRows(doneItems, true) : '<tr><td colspan="8" class="empty">Aún no hay actividades completadas en esta sección.</td></tr>'}
+    </tbody></table></div>
+  </div>
+  `;
 }
 
 /* ---------- Vistas: Ajustes e Historial ---------- */
@@ -1170,18 +1375,22 @@ function vSet(){
    <div class="f"><label for="cfg_f">Fondos disponibles (US$)</label><input id="cfg_f" type="number" step="any" value="${S.config.fondos??''}"></div>
    <div class="row" style="margin-top:10px"><button class="btn pri" data-a="saveCfg">Guardar Presupuesto</button></div>
    <p class="note">Permite calcular el déficit o la holgura en el Tablero frente a los costos cargados.</p>
-   <h3 style="margin-top:22px">Copia de Seguridad y Migración</h3>
+   
+   <h3 style="margin-top:22px">Exportación de Datos</h3>
    <div class="row">
-     <button class="btn pri" data-a="seedData">🚀 Cargar datos originales PROFALCA</button> <button class="btn" data-a="xlsx">Exportar todo a Excel (.xlsx)</button>
-     <label class="btn pri" style="cursor:pointer;display:inline-block">
-       📥 Cargar datos desde Excel (.xlsx)
-       <input type="file" id="f_import_xlsx" accept=".xlsx" style="display:none">
-     </label>
+     <button class="btn pri" data-a="xlsx">📊 Exportar todo a Excel (.xlsx)</button>
    </div>
-   <p class="note">Si tienes el archivo Excel que exportaste del programa anterior en Claude, súbelo aquí y se cargarán todas las actividades, minutas y acuerdos automáticamente a Firebase.</p></section>
+   <p class="note">Descarga el libro Excel con todas las hojas: Actividades, Bitácora, Acuerdos y Reuniones.</p>
+
+   <h3 style="margin-top:22px">Mantenimiento de Historial</h3>
+   <div class="row">
+     <button class="btn danger" data-a="clearLog">🗑️ Limpiar historial de cambios</button>
+   </div>
+   <p class="note">Vacía los registros de actividad para empezar un registro limpio. No afecta tus actividades ni minutas.</p>
+  </section>
   <section class="panel c7"><h3>Historial de cambios en vivo</h3><div class="tw" style="border:0"><table class="hist"><tbody>
    ${S.log.length ? S.log.map(l => `<tr><td class="mono" style="white-space:nowrap">${new Date(l.ts).toLocaleString('es-VE',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td><td class="muted">${esc(l.uid||'Alguien')}</td><td>${esc(l.txt)}</td></tr>`).join('')
-   : '<tr><td class="empty">Aún no hay cambios registrados en el historial.</td></tr>'}
+   : '<tr><td class="empty">Aún no hay cambios registrados en el historial (limpio).</td></tr>'}
   </tbody></table></div></section></div>`;
 }
 
@@ -1292,25 +1501,13 @@ function entModal(id){
       await wset('entries', rid('e-'), d, `Agregó ${actId} a plan de trabajo ${fShort(m.fecha)}`);
     }
 
-    // ACTUALIZACIÓN AUTOMÁTICA EN LA ACTIVIDAD MAESTRA
-    let masterStatus = 'En proceso';
-    let masterAvance = null;
+    // ACTUALIZACIÓN AUTOMÁTICA EN LA ACTIVIDAD MAESTRA (Mismo estatus exacto)
+    const actUpdate = { estatus: newEst };
     if (newEst === 'Completado') {
-      masterStatus = 'Completado';
-      masterAvance = 100;
-    } else if (newEst === 'Bloqueado') {
-      masterStatus = 'Bloqueado';
-    } else if (newEst === 'Pendiente') {
-      masterStatus = 'Pendiente';
-    } else {
-      // 'Próxima entrega' o 'En proceso'
-      masterStatus = 'En proceso';
+      actUpdate.avance = 100;
     }
-
-    const actUpdate = { estatus: masterStatus };
-    if (masterAvance !== null) actUpdate.avance = masterAvance;
     if (d.nota) actUpdate.bloqueo = newEst === 'Bloqueado' ? d.nota : (actById(actId)?.bloqueo || '');
-    await wupd('acts', actId, actUpdate, `Sincronizó estatus de ${actId} a ${masterStatus}`);
+    await wupd('acts', actId, actUpdate, `Sincronizó estatus de ${actId} a ${newEst}`);
 
     toast('Actividad guardada y sincronizada automáticamente');
   }, e ? { del: async () => { await wdel('entries', e._id, `Quitó ${e.actId} del plan de trabajo ${fShort(m.fecha)}`); } } : null);
@@ -1366,50 +1563,261 @@ function pdfName(m){ const [y,mo,d]=m.fecha.split('-'); return `MINUTA_${m.num||
 function makePDF(m){
   if(!window.jspdf || !window.jspdf.jsPDF){ toast('El generador de PDF no cargó.'); return null; }
   const doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'a4' });
-  const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 54, MW = PW - 2*M; let y = M;
-  const need = hh => { if(y + hh > PH - M){ doc.addPage(); y = M; } };
-  const tx = (t,o) => { o=o||{}; const sz=o.size||10.5; doc.setFont('helvetica',o.bold?'bold':'normal'); doc.setFontSize(sz);
-    doc.splitTextToSize(String(t||''),MW-(o.ind||0)).forEach(l=>{ need(sz*1.4); doc.text(l,M+(o.ind||0),y+sz); y+=sz*1.4; }); y+=(o.gap==null?4:o.gap); };
-  const body = t => String(t||'').split('\n').forEach(l=>{ const b=/^\s*[-•●]\s+(.*)$/.exec(l); if(b) tx('-  '+b[1],{ind:12,gap:1}); else if(l.trim()) tx(l,{gap:4}); });
-  const tbl = (head,rows,o) => { need(60); doc.autoTable(Object.assign({ startY:y, head:[head], body:rows, margin:{left:M,right:M,top:M,bottom:M}, theme:'grid', styles:{fontSize:9.5,cellPadding:4,textColor:20,lineColor:[185,192,197]}, headStyles:{fillColor:[230,235,238],textColor:20} }, o||{})); y = doc.lastAutoTable.finalY + 12; };
+  const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight();
+  const M = 48, MW = PW - 2*M;
+  let y = M;
 
-  const ents = sortedEntries(m._id), s = m.secs || [];
-  const ac = S.agreements.filter(x => x.meetingId === m._id && x.kind === 'acuerdo').sort((a,b)=>(a.ord||0)-(b.ord||0));
-  const en = S.agreements.filter(x => x.meetingId === m._id && x.kind === 'entregable').sort((a,b)=>(a.ord||0)-(b.ord||0));
+  const need = hh => {
+    if(y + hh > PH - 48){
+      doc.addPage();
+      y = M;
+    }
+  };
 
-  tx(`MINUTA ${m.num||''} | REUNIÓN ${fLong(m.fecha)}.`, { size: 15, bold: true, gap: 8 });
-  tx('Participantes: ' + (m.participantes||[]).join(', ') + '.', { gap: 2 });
-  tx('Objetivo: ' + (m.objetivo||''), { gap: 8 });
-  if(m.nota){ tx('NOTA IMPORTANTE:', { bold: true, gap: 1 }); body(m.nota); y += 6; }
-  if(s.length){ tx('1. RESUMEN DE LO TRATADO', { bold: true, size: 12, gap: 6 }); s.forEach((x,i)=>{ tx(`1.${i+1}. ${x.t}`, { bold: true, gap: 2 }); body(x.b); y += 4; }); }
-  const ags = S.agreements.filter(x => x.meetingId === m._id).sort((a,b)=>(a.ord||0)-(b.ord||0));
-  let n = 2;
-  if(ags.length){
-    y += 4;
-    tx(`${n++}. PLAN DE TRABAJO Y COMPROMISOS PARA LA PRÓXIMA REUNIÓN${m.proxima?' ('+fLong(m.proxima)+')':''}`, { bold: true, size: 12, gap: 6 });
-    tbl(['N.º','Tipo','Compromiso / Acción','Condición / Observación','Responsable'], ags.map((x,i)=>[i+1, x.kind==='entregable'?'Entregable':'Acción', x.texto, x.cond, x.resp||'—']), { columnStyles:{0:{cellWidth:26}, 1:{cellWidth:65}} });
+  // 1. BANNER CORPORATIVO SUPERIOR
+  doc.setFillColor(7, 56, 78); // #07384E
+  doc.rect(M, y, MW, 38, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('PROFALCA · PLANTA DE POLIPROPILENO', M + 14, y + 16);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(168, 209, 226); // #A8D1E2
+  doc.text('PROYECTO DE PRE-ARRANQUE — CONTROL OPERACIONAL', M + 14, y + 29);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(255, 255, 255);
+  doc.text(`MINUTA ${m.num || '—'}`, PW - M - 14, y + 24, { align: 'right' });
+  y += 48;
+
+  // 2. TABLA METADATOS DE LA REUNIÓN
+  const metaBody = [
+    [
+      { content: `Fecha de Reunión: ${fLong(m.fecha)}`, styles: { fontStyle: 'bold' } },
+      { content: `Próxima Reunión: ${m.proxima ? fLong(m.proxima) : 'Por definir'}`, styles: { fontStyle: 'bold' } },
+      { content: `Responsable: ${m.responsable || 'Gelsy Sonnessa'}`, styles: { fontStyle: 'bold' } }
+    ],
+    [
+      { content: `Participantes: ${(m.participantes || []).join(', ') || 'No registrados'}`, colSpan: 3 }
+    ],
+    [
+      { content: `Objetivo: ${m.objetivo || 'Seguimiento del proyecto de arranque.'}`, colSpan: 3 }
+    ]
+  ];
+
+  doc.autoTable({
+    startY: y,
+    body: metaBody,
+    margin: { left: M, right: M },
+    theme: 'plain',
+    styles: {
+      fontSize: 8.5,
+      cellPadding: 4.5,
+      textColor: [30, 41, 59],
+      lineColor: [210, 220, 226],
+      lineWidth: 0.75,
+      fillColor: [248, 250, 252]
+    }
+  });
+  y = doc.lastAutoTable.finalY + 12;
+
+  // 3. NOTA IMPORTANTE (Si existe)
+  if (m.nota) {
+    need(40);
+    const notaLines = doc.splitTextToSize(m.nota, MW - 24);
+    const notaH = notaLines.length * 11 + 20;
+    need(notaH);
+    doc.setFillColor(254, 243, 199);
+    doc.rect(M, y, MW, notaH, 'F');
+    doc.setFillColor(217, 119, 6);
+    doc.rect(M, y, 4, notaH, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(180, 83, 9);
+    doc.text('NOTA IMPORTANTE:', M + 12, y + 12);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(60, 50, 30);
+    doc.text(notaLines, M + 12, y + 23, { align: 'justify', maxWidth: MW - 24 });
+    y += notaH + 12;
   }
-  if(ents.length){
-    y += 4;
-    tx(`${n++}. PLAN DE TRABAJO SEMANAL (RSE)${m.proxima?' ('+fLong(m.proxima)+')':''}.`, { bold: true, size: 12, gap: 0 });
-    doc.addPage('a4','landscape'); const W2 = doc.internal.pageSize.getWidth(), M2 = 40;
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.text('REPORTE SEMANAL DE ESTADO (RSE) | PRE-ARRANQUE PROFALCA', M2, M2+10);
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text(`Semana: ${m.semana||weekLabel(m.fecha)}`, M2, M2+34); doc.text(`Ruta evaluada: ${m.ruta||''}`, W2/2, M2+34);
-    doc.text(`Responsable del reporte: ${m.responsable||''}`, M2, M2+50); doc.text(`Fecha de entrega: ${fShort(m.entrega||m.fecha)}`, W2/2, M2+50);
-    doc.setFont('helvetica','bold'); doc.text('Progreso Semanal de Actividades Propuestas para el Pre-Arranque de PROFALCA.', M2, M2+74);
-    const hasF = ents.some(e=>e.fecha);
-    doc.autoTable({
-      startY: M2+84,
-      head: [['ID','Actividad','Estatus',...(hasF?['Fecha acción']:[]),'Notas Estatus PROFALCA']],
-      body: ents.map(e => { const a = actById(e.actId); return [e.actId, a?a.title:'', e.estatus, ...(hasF?[e.fecha?fShort(e.fecha):'']:[]), e.nota]; }),
-      margin: { left: M2, right: M2, top: M2, bottom: M2 },
-      theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 4, textColor: 20, lineColor: [185,192,197] },
-      headStyles: { fillColor: [230,235,238], textColor: 20 },
-      columnStyles: { 0: { cellWidth: 48 }, 2: { cellWidth: 78 } }
+
+  // 4. SECCIÓN 1: RESUMEN DE LO TRATADO (Texto Justificado)
+  const s = m.secs || [];
+  if (s.length) {
+    need(35);
+    doc.setFillColor(235, 243, 248);
+    doc.rect(M, y, MW, 20, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(7, 56, 78);
+    doc.text('1. RESUMEN DE LO TRATADO', M + 8, y + 14);
+    y += 26;
+
+    s.forEach((sec, idx) => {
+      need(25);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(11, 86, 120);
+      doc.text(`1.${idx + 1}. ${sec.t}`, M, y);
+      y += 12;
+
+      const pList = String(sec.b || '').split('\n');
+      pList.forEach(rawP => {
+        const bulletMatch = /^\s*[-•●]\s+(.*)$/.exec(rawP);
+        if (bulletMatch) {
+          const bText = bulletMatch[1];
+          const lines = doc.splitTextToSize(bText, MW - 16);
+          need(lines.length * 11 + 4);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(11, 86, 120);
+          doc.text('•', M + 6, y + 8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(30, 41, 59);
+          doc.text(lines, M + 16, y + 8, { maxWidth: MW - 16, align: 'justify' });
+          y += lines.length * 11 + 3;
+        } else if (rawP.trim()) {
+          const lines = doc.splitTextToSize(rawP.trim(), MW);
+          need(lines.length * 11 + 6);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(30, 41, 59);
+          doc.text(lines, M, y + 8, { maxWidth: MW, align: 'justify' });
+          y += lines.length * 11 + 6;
+        }
+      });
+      y += 6;
     });
   }
+
+  // 5. SECCIÓN 2: PLAN DE TRABAJO Y COMPROMISOS / ACUERDOS
+  const ags = S.agreements.filter(x => x.meetingId === m._id).sort((a,b)=>(a.ord||0)-(b.ord||0));
+  let secNum = 2;
+  if (ags.length) {
+    need(40);
+    doc.setFillColor(235, 243, 248);
+    doc.rect(M, y, MW, 20, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(7, 56, 78);
+    doc.text(`${secNum++}. COMPROMISOS Y ACCIONES PARA LA PRÓXIMA REUNIÓN${m.proxima ? ' (' + fShort(m.proxima) + ')' : ''}`, M + 8, y + 14);
+    y += 24;
+
+    doc.autoTable({
+      startY: y,
+      head: [['N.º', 'Tipo', 'Compromiso / Acción', 'Condición / Observación', 'Responsable']],
+      body: ags.map((x, i) => [
+        i + 1,
+        x.kind === 'entregable' ? 'Entregable' : 'Acción',
+        x.texto,
+        x.cond || '—',
+        x.resp || '—'
+      ]),
+      margin: { left: M, right: M },
+      theme: 'grid',
+      styles: { fontSize: 8.5, cellPadding: 4, textColor: [30, 41, 59], lineColor: [205, 215, 222] },
+      headStyles: { fillColor: [11, 86, 120], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [250, 252, 254] },
+      columnStyles: {
+        0: { cellWidth: 26, halign: 'center' },
+        1: { cellWidth: 65 },
+        4: { cellWidth: 80 }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 14;
+  }
+
+  // 6. SECCIÓN 3: PLAN DE TRABAJO SEMANAL (RSE) - PÁGINA HORIZONTAL
+  const ents = sortedEntries(m._id);
+  if (ents.length) {
+    doc.addPage('a4', 'landscape');
+    const W2 = doc.internal.pageSize.getWidth(), H2 = doc.internal.pageSize.getHeight();
+    const M2 = 36, MW2 = W2 - 2 * M2;
+    let y2 = M2;
+
+    doc.setFillColor(7, 56, 78);
+    doc.rect(M2, y2, MW2, 34, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('REPORTE SEMANAL DE ESTADO (RSE) | PRE-ARRANQUE PROFALCA', M2 + 12, y2 + 15);
+    doc.setFontSize(8.5);
+    doc.setTextColor(168, 209, 226);
+    doc.text('Matriz de avance de actividades, compromisos técnicos y ruta crítica', M2 + 12, y2 + 27);
+    y2 += 40;
+
+    doc.autoTable({
+      startY: y2,
+      body: [
+        [
+          `Semana: ${m.semana || weekLabel(m.fecha)}`,
+          `Ruta evaluada: ${m.ruta || 'Línea de producción pre-arranque'}`,
+          `Responsable del reporte: ${m.responsable || 'Gelsy Sonnessa'}`,
+          `Fecha de entrega: ${fShort(m.entrega || m.fecha)}`
+        ]
+      ],
+      margin: { left: M2, right: M2 },
+      theme: 'plain',
+      styles: { fontSize: 8.5, cellPadding: 3.5, textColor: [30, 41, 59], fillColor: [245, 248, 250], lineColor: [210, 220, 226], lineWidth: 0.5 }
+    });
+    y2 = doc.lastAutoTable.finalY + 10;
+
+    const hasF = ents.some(e => e.fecha);
+    doc.autoTable({
+      startY: y2,
+      head: [['ID', 'Actividad', 'Responsable', 'Estatus', ...(hasF ? ['Fecha límite'] : []), 'Compromiso / Notas PROFALCA']],
+      body: ents.map(e => {
+        const a = actById(e.actId);
+        return [
+          e.actId,
+          a ? a.title : '',
+          a ? (a.responsable || '—') : '—',
+          e.estatus,
+          ...(hasF ? [e.fecha ? fShort(e.fecha) : '—'] : []),
+          e.nota || '—'
+        ];
+      }),
+      margin: { left: M2, right: M2 },
+      theme: 'grid',
+      styles: { fontSize: 8.5, cellPadding: 4, textColor: [30, 41, 59], lineColor: [205, 215, 222] },
+      headStyles: { fillColor: [11, 86, 120], textColor: [255, 255, 255], fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [250, 252, 254] },
+      columnStyles: {
+        0: { cellWidth: 46, halign: 'center', fontStyle: 'bold' },
+        1: { cellWidth: 155 },
+        2: { cellWidth: 70 },
+        3: { cellWidth: 80, fontStyle: 'bold' },
+        ...(hasF ? { 4: { cellWidth: 65, halign: 'center' } } : {})
+      }
+    });
+  }
+
+  // 7. PIE DE PÁGINA EJECUTIVO EN TODAS LAS PÁGINAS
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    const curW = doc.internal.pageSize.getWidth();
+    const curH = doc.internal.pageSize.getHeight();
+    const pad = curW > curH ? 36 : 48;
+
+    doc.setDrawColor(215, 225, 230);
+    doc.setLineWidth(0.75);
+    doc.line(pad, curH - 22, curW - pad, curH - 22);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(100, 115, 125);
+    doc.text(`PROFALCA · Seguimiento de Pre-Arranque | Minuta ${m.num || 'X'} (${fShort(m.fecha)})`, pad, curH - 11);
+    doc.text(`Página ${i} de ${totalPages}`, curW - pad, curH - 11, { align: 'right' });
+  }
+
   return doc;
 }
 
@@ -1592,6 +2000,23 @@ const A = {
   syncMeets: () => syncMeetingsText(false),
   nav: d => { view = d.v; try{ localStorage.setItem('pf_view', view); }catch(e){} render(); scrollTo(0,0); },
   goMeet: d => { selM = d.id; view = 'reuniones'; render(); },
+  clearMeetQ: () => { F.meetQ = ''; render(); },
+  clearBFilters: () => { F.bq = ''; F.bm = ''; F.be = ''; F.bs = ''; render(); },
+  clearLog: async () => {
+    if(!confirm('¿Estás segura de vaciar el historial de cambios? Tus actividades, minutas y acuerdos permanecerán intactos.')) return;
+    try {
+      toast('Limpiando historial de cambios...');
+      const snap = await db.collection('log').get();
+      const batch = db.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      S.log = [];
+      render();
+      toast('Historial de cambios limpiado con éxito');
+    } catch(e) {
+      fail(e);
+    }
+  },
   openAct: d => actModal(d.id), editAct: d => actModal(d.id), newAct: () => actModal(null),
   newMeet: () => meetModal(null), editMeet: () => meetModal(curMeet()._id),
   sub: d => { sub = d.v; render(); },
