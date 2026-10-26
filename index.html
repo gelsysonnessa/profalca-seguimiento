@@ -539,7 +539,20 @@ const sortedActs = () => [...S.acts].sort((a,b) => {
 });
 const sortedMeets = () => [...S.meetings].sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
 const actById = id => S.acts.find(a => a._id === id);
-const prog = a => a.avance!=null && a.avance!=='' ? Number(a.avance) : (a.estatus==='Completado'?100:0);
+const prog = a => {
+  if (!a) return 0;
+  if (a.estatus === 'Completado') return 100;
+  let val = a.avance;
+  if (val == null || val === '') {
+    const e = S.entries.filter(x => x.actId === a._id).sort((x,y)=>(y.ord||0)-(x.ord||0))[0];
+    if (e && e.avance != null && e.avance !== '') val = e.avance;
+  }
+  if (val != null && val !== '') {
+    const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+    if (!isNaN(num)) return Math.min(100, Math.max(0, num));
+  }
+  return 0;
+};
 const isDone = a => a.estatus === 'Completado';
 const isOver = a => a.fechaObj && !isDone(a) && a.fechaObj < today();
 const isBlocked = a => !isDone(a) && (a.estatus === 'Bloqueado' || !!a.bloqueo);
@@ -627,11 +640,23 @@ async function syncActsWithLatestRSE() {
         return dy.localeCompare(dx) || (y.ord || 0) - (x.ord || 0);
       });
       const latest = entries[0];
-      if (latest && latest.estatus && a.estatus !== latest.estatus) {
-        console.log(`Harmonizando estatus ${a._id}: ${a.estatus} -> ${latest.estatus}`);
-        a.estatus = latest.estatus;
-        const up = { estatus: latest.estatus };
-        if (latest.estatus === 'Completado' && (a.avance === null || a.avance < 100)) up.avance = 100;
+      const needsEstatusUpdate = latest && latest.estatus && a.estatus !== latest.estatus;
+      const needsAvanceUpdate = latest && latest.avance != null && latest.avance !== '' && a.avance !== latest.avance;
+      if (needsEstatusUpdate || needsAvanceUpdate) {
+        const up = {};
+        if (needsEstatusUpdate) {
+          console.log(`Harmonizando estatus ${a._id}: ${a.estatus} -> ${latest.estatus}`);
+          a.estatus = latest.estatus;
+          up.estatus = latest.estatus;
+          if (latest.estatus === 'Completado' && (a.avance === null || a.avance < 100)) {
+            up.avance = 100;
+            a.avance = 100;
+          }
+        }
+        if (needsAvanceUpdate && up.avance === undefined) {
+          a.avance = latest.avance;
+          up.avance = latest.avance;
+        }
         await db.doc('acts/' + a._id).set(up, { merge: true });
       }
     }
@@ -826,6 +851,8 @@ function vTablero(){
   </div>`;
   const cnt = {}; ACT_EST.forEach(e => cnt[e] = A.filter(a => a.estatus === e).length);
   const avg = A.reduce((s,a) => s + prog(a), 0) / n;
+  const inFlight = A.filter(a => a.estatus === 'Próxima entrega' || a.estatus === 'En proceso');
+  const inFlightAvg = inFlight.length ? Math.round(inFlight.reduce((s,a) => s + prog(a), 0) / inFlight.length) : 0;
   const blocked = A.filter(isBlocked), over = A.filter(isOver), crit = A.filter(a => a.critica && !isDone(a));
   const openAg = S.agreements.filter(x => !x.done);
   const sis = {}; A.forEach(a => { const k = a.sistema || 'Sin sistema'; (sis[k] = sis[k] || {t:0,d:0}).t++; if(isDone(a)) sis[k].d++; });
@@ -898,14 +925,22 @@ function vTablero(){
   <div class="pagehead"><h2>Tablero General</h2><span class="muted">${fLong(today())}</span></div>
   <div class="grid">
    <section class="panel c12">
-    <div class="hero"><div><div class="big">${nf(avg)}<small>%</small></div><div class="note">avance promedio de las ${n} actividades</div></div>
-     <div><div class="seg">${seg}</div><div class="legend">${leg}</div></div></div>
+    <div class="hero">
+      <div>
+        <div class="big">${nf(avg)}<small>%</small></div>
+        <div class="note">avance promedio global (${n} actividades)</div>
+        ${inFlight.length ? `<div style="font-size:12px;color:var(--muted);margin-top:4px"><b>${inFlightAvg}%</b> promedio en actividades en curso (${inFlight.length} entre Próxima entrega y En proceso)</div>` : ''}
+      </div>
+      <div><div class="seg">${seg}</div><div class="legend">${leg}</div></div>
+    </div>
     <div class="stats">
+     <div class="stat"><b style="color:var(--warn)">${cnt['Próxima entrega']||0}</b><span>próxima entrega</span></div>
+     <div class="stat"><b style="color:var(--accent)">${cnt['En proceso']||0}</b><span>en proceso</span></div>
      <div class="stat"><b>${blocked.length}</b><span>con bloqueo</span></div>
      <div class="stat"><b>${over.length}</b><span>vencidas</span></div>
      <div class="stat"><b>${crit.length}</b><span>en ruta crítica</span></div>
      <div class="stat"><b>${openAg.length}</b><span>acuerdos abiertos</span></div>
-     <div class="stat"><b>${S.meetings.length}</b><span>reuniones registradas</span></div>
+     <div class="stat"><b>${S.meetings.length}</b><span>reuniones</span></div>
     </div></section>
    <section class="panel c6">
     <h3>Distribución por Estatus</h3>
@@ -1103,19 +1138,21 @@ function tPlanTrabajo(m, ents){
       </div>
     </div>
     <div class="tw"><table><thead><tr>
-      <th>ID</th><th>Actividad</th><th>Responsable</th><th>Estatus RSE</th><th>Fecha acción / límite</th><th>Compromiso / Qué se entrega (Notas PROFALCA)</th>
+      <th>ID</th><th>Actividad</th><th>Responsable</th><th>Estatus RSE</th><th>Avance</th><th>Fecha acción / límite</th><th>Compromiso / Qué se entrega (Notas PROFALCA)</th>
     </tr></thead><tbody>
     ${ents.length ? ents.map(e => {
       const a = actById(e.actId);
+      const av = a ? prog(a) : (e.avance || 0);
       return `<tr class="click" data-a="editEnt" data-id="${e._id}">
         <td class="mono"><b style="color:var(--accent)">${esc(e.actId)}</b></td>
         <td style="min-width:210px"><b>${a?esc(a.title):'<span class="muted">Actividad eliminada</span>'}</b></td>
         <td>${a?esc(a.responsable||'—'):'—'}</td>
         <td>${pill(e.estatus)}</td>
+        <td><div class="prog"><div class="t"><i style="width:${av}%"></i></div><span>${av}%</span></div></td>
         <td>${e.fecha?fShort(e.fecha):'—'}</td>
         <td style="min-width:320px">${esc(e.nota)}</td>
       </tr>`;
-    }).join('') : '<tr><td colspan="6" class="empty">Sin actividades en el plan semanal todavía. Agrega actividades o trae los pendientes de la reunión previa.</td></tr>'}
+    }).join('') : '<tr><td colspan="7" class="empty">Sin actividades en el plan semanal todavía. Agrega actividades o trae los pendientes de la reunión previa.</td></tr>'}
     </tbody></table></div>
   </div>`;
 }
@@ -1195,6 +1232,7 @@ function vBitacora(){
       detail: latest.entry.nota || (a ? a.riesgo : ''),
       resp: a ? a.responsable : (latest.meeting ? latest.meeting.responsable : ''),
       estatus: latest.entry.estatus,
+      avance: a ? prog(a) : (latest.entry.avance || 0),
       deadline: latest.entry.fecha || (latest.meeting ? latest.meeting.proxima : ''),
       done: isDone,
       history: history
@@ -1224,6 +1262,7 @@ function vBitacora(){
       detail: ag.cond,
       resp: ag.resp,
       estatus: ag.done ? 'Completado' : (ag.kind === 'entregable' ? 'Próxima entrega' : 'En proceso'),
+      avance: ag.done ? 100 : (ag.kind === 'entregable' ? 50 : 25),
       deadline: ag.fecha,
       done: !!ag.done,
       history: []
@@ -1275,6 +1314,7 @@ function vBitacora(){
       <td style="min-width:250px;font-size:13.5px">${esc(x.detail)}</td>
       <td>${esc(x.resp||'—')}</td>
       <td>${pill(x.estatus)}</td>
+      <td><div class="prog"><div class="t"><i style="width:${x.avance||0}%"></i></div><span>${x.avance||0}%</span></div></td>
       <td>
         ${x.history && x.history.length > 1 ? `
           <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
@@ -1337,10 +1377,11 @@ function vBitacora(){
       <th>Qué se entrega (Notas PROFALCA)</th>
       <th>Responsable</th>
       <th>Estatus actual</th>
+      <th>Avance</th>
       <th style="min-width:180px">Trazabilidad por Minuta</th>
       <th style="text-align:center">Cumplido</th>
     </tr></thead><tbody>
-      ${activeItems.length ? renderTableRows(activeItems, false) : '<tr><td colspan="8" class="empty">No hay actividades en seguimiento con los filtros actuales.</td></tr>'}
+      ${activeItems.length ? renderTableRows(activeItems, false) : '<tr><td colspan="9" class="empty">No hay actividades en seguimiento con los filtros actuales.</td></tr>'}
     </tbody></table></div>
   </div>
 
@@ -1359,10 +1400,11 @@ function vBitacora(){
       <th>Entregable final / Observación</th>
       <th>Responsable</th>
       <th>Estatus</th>
+      <th>Avance</th>
       <th style="min-width:180px">Trazabilidad Histórica</th>
       <th style="text-align:center">Reabrir</th>
     </tr></thead><tbody>
-      ${doneItems.length ? renderTableRows(doneItems, true) : '<tr><td colspan="8" class="empty">Aún no hay actividades completadas en esta sección.</td></tr>'}
+      ${doneItems.length ? renderTableRows(doneItems, true) : '<tr><td colspan="9" class="empty">Aún no hay actividades completadas en esta sección.</td></tr>'}
     </tbody></table></div>
   </div>
   `;
@@ -1478,22 +1520,28 @@ function entModal(id){
   const m = curMeet(), e = id ? S.entries.find(x => x._id === id) : null;
   const used = new Set(S.entries.filter(x => x.meetingId === m._id).map(x => x.actId));
   const av = sortedActs().filter(a => !used.has(a._id) || (e && e.actId === a._id));
-  const v = e || { estatus: 'Próxima entrega', nota: '', fecha: '' };
+  const act = e ? actById(e.actId) : null;
+  const currAvance = act ? prog(act) : (e && e.avance != null ? e.avance : '');
+  const v = e || { estatus: 'Próxima entrega', nota: '', fecha: '', avance: '' };
   
   openModal(e ? 'Editar actividad en el Plan de Trabajo (RSE)' : 'Agregar actividad al Plan de Trabajo (RSE)', `<div class="form">
    <div class="f"><label>Actividad</label><select id="f_act" ${e?'disabled':''}>${av.map(a => `<option value="${a._id}" ${e&&e.actId===a._id?'selected':''}>${a._id} · ${esc(a.title)}</option>`).join('')}</select></div>
-   <div class="f h"><label>Estatus en el RSE</label><select id="f_est">${ENT_EST.map(x => `<option ${v.estatus===x?'selected':''}>${x}</option>`).join('')}</select></div>
-   <div class="f h"><label>Fecha límite / acción</label><input id="f_fecha" type="date" value="${esc(v.fecha)}"></div>
+   <div class="f t"><label>Estatus en el RSE</label><select id="f_est">${ENT_EST.map(x => `<option ${v.estatus===x?'selected':''}>${x}</option>`).join('')}</select></div>
+   <div class="f t"><label>Avance %</label><input id="f_av" type="number" min="0" max="100" placeholder="0 - 100" value="${currAvance}"></div>
+   <div class="f t"><label>Fecha límite / acción</label><input id="f_fecha" type="date" value="${esc(v.fecha)}"></div>
    <div class="f"><label>Compromiso / Qué se entrega (Notas estatus PROFALCA)</label><textarea id="f_nota" style="min-height:100px" placeholder="Describe qué entregable o trabajo se compromete para la próxima reunión...">${esc(v.nota)}</textarea></div>
    <div class="f" style="background:var(--accent-soft);border:1px solid var(--accent);border-radius:3px;padding:8px 12px;display:flex;align-items:center;gap:8px">
      <span style="font-size:16px">⚡</span>
-     <span style="font-size:12.5px;color:var(--ink)"><b>Sincronización automática:</b> Al guardar, el estatus se actualizará en la lista de Actividades y en el Tablero sin pasos adicionales.</span>
+     <span style="font-size:12.5px;color:var(--ink)"><b>Sincronización automática:</b> Al guardar, el estatus y el avance se actualizarán en la lista de Actividades y en el Tablero sin pasos adicionales.</span>
    </div>
   </div>`, async () => {
     const actId = e ? e.actId : $('#f_act').value;
     if(!actId) throw new Error('No quedan actividades disponibles por agregar.');
     const newEst = $('#f_est').value;
+    const rawAv = $('#f_av') ? $('#f_av').value.trim() : '';
+    const newAv = rawAv !== '' ? Math.min(100, Math.max(0, parseFloat(rawAv) || 0)) : null;
     const d = { meetingId: m._id, actId, estatus:newEst, fecha:$('#f_fecha').value, nota:$('#f_nota').value.trim() };
+    if (newAv !== null) d.avance = newAv;
     if(e){
       await wupd('entries', e._id, d, `Editó ${actId} en plan de trabajo ${fShort(m.fecha)}`);
     } else {
@@ -1501,13 +1549,15 @@ function entModal(id){
       await wset('entries', rid('e-'), d, `Agregó ${actId} a plan de trabajo ${fShort(m.fecha)}`);
     }
 
-    // ACTUALIZACIÓN AUTOMÁTICA EN LA ACTIVIDAD MAESTRA (Mismo estatus exacto)
+    // ACTUALIZACIÓN AUTOMÁTICA EN LA ACTIVIDAD MAESTRA (Mismo estatus exacto y avance)
     const actUpdate = { estatus: newEst };
     if (newEst === 'Completado') {
       actUpdate.avance = 100;
+    } else if (newAv !== null) {
+      actUpdate.avance = newAv;
     }
     if (d.nota) actUpdate.bloqueo = newEst === 'Bloqueado' ? d.nota : (actById(actId)?.bloqueo || '');
-    await wupd('acts', actId, actUpdate, `Sincronizó estatus de ${actId} a ${newEst}`);
+    await wupd('acts', actId, actUpdate, `Sincronizó estatus y avance de ${actId}`);
 
     toast('Actividad guardada y sincronizada automáticamente');
   }, e ? { del: async () => { await wdel('entries', e._id, `Quitó ${e.actId} del plan de trabajo ${fShort(m.fecha)}`); } } : null);
