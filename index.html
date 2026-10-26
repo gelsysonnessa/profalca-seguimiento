@@ -721,7 +721,7 @@ async function boot(){
   // Suscribirse a las colecciones de Firestore
   ['acts','meetings','entries','agreements'].forEach(n => sub1(n, db.collection(n)));
 
-  // Auto-verificar si las minutas necesitan su texto completo
+  // Auto-verificar si las minutas necesitan su texto completo o si falta ACT-40
   setTimeout(() => {
     if (db && S.meetings && S.meetings.length > 0) {
       const m1 = S.meetings.find(m => m._id === 'm-2026-10-07');
@@ -729,6 +729,13 @@ async function boot(){
       if ((!m1 || !m1.secs || !m1.secs.length) || (!m2 || !m2.secs || !m2.secs.length)) {
         console.log('Sincronizando texto de las minutas en Firestore...');
         syncMeetingsText(true);
+      }
+    }
+    if (db && S.acts && S.acts.length > 0 && !S.acts.some(a => a._id === 'ACT-40')) {
+      const act40 = SEED_DATA.acts.find(a => a._id === 'ACT-40');
+      if (act40) {
+        console.log('Sincronizando ACT-40 en Firestore...');
+        db.doc('acts/ACT-40').set(clean(act40));
       }
     }
   }, 1200);
@@ -852,14 +859,15 @@ function render(){
 
 /* ---------- Vistas: Tablero ---------- */
 function vTablero(){
-  const A = S.acts, n = A.length;
-  if(!n) return `<div class="panel empty" style="text-align:center;padding:40px 20px">
+  const A = S.acts;
+  if(!A.length) return `<div class="panel empty" style="text-align:center;padding:40px 20px">
     <h3 style="font-size:22px;color:var(--ink);margin-bottom:8px">Base de datos conectada</h3>
     <p class="muted" style="max-width:540px;margin:0 auto 20px">Tu base de datos en Firebase está activa y lista. Haz clic en el botón para cargar todas las 40 actividades, bitácoras y acuerdos que tenías en el sistema.</p>
     <button class="btn pri" data-a="seedData" style="font-size:16px;padding:10px 24px">🚀 Cargar todas las actividades y datos de PROFALCA ahora</button>
   </div>`;
+  const n = 40; // Base oficial de 40 actividades PROFALCA
   const cnt = {}; ACT_EST.forEach(e => cnt[e] = A.filter(a => a.estatus === e).length);
-  const avg = A.reduce((s,a) => s + prog(a), 0) / n;
+  const avg = A.reduce((s,a) => s + prog(a), 0) / 40;
   const blocked = A.filter(isBlocked), over = A.filter(isOver), crit = A.filter(a => a.critica && !isDone(a));
   const openAg = S.agreements.filter(x => !x.done);
   const sis = {}; A.forEach(a => { const k = a.sistema || 'Sin sistema'; (sis[k] = sis[k] || {t:0,d:0}).t++; if(isDone(a)) sis[k].d++; });
