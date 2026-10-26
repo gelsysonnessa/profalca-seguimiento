@@ -544,8 +544,17 @@ const prog = a => {
   if (a.estatus === 'Completado') return 100;
   let val = a.avance;
   if (val == null || val === '') {
-    const e = S.entries.filter(x => x.actId === a._id).sort((x,y)=>(y.ord||0)-(x.ord||0))[0];
-    if (e && e.avance != null && e.avance !== '') val = e.avance;
+    const meetsMap = new Map((S.meetings||[]).map(m => [m._id, m]));
+    const entries = S.entries.filter(x => x.actId === a._id);
+    if (entries.length) {
+      entries.sort((x, y) => {
+        const mx = meetsMap.get(x.meetingId), my = meetsMap.get(y.meetingId);
+        const dx = mx ? mx.fecha : '0000-00-00', dy = my ? my.fecha : '0000-00-00';
+        return dy.localeCompare(dx) || (y.ord || 0) - (x.ord || 0);
+      });
+      const latest = entries.find(x => x.avance != null && x.avance !== '') || entries[0];
+      if (latest && latest.avance != null && latest.avance !== '') val = latest.avance;
+    }
   }
   if (val != null && val !== '') {
     const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
@@ -851,8 +860,6 @@ function vTablero(){
   </div>`;
   const cnt = {}; ACT_EST.forEach(e => cnt[e] = A.filter(a => a.estatus === e).length);
   const avg = A.reduce((s,a) => s + prog(a), 0) / n;
-  const inFlight = A.filter(a => a.estatus === 'Próxima entrega' || a.estatus === 'En proceso');
-  const inFlightAvg = inFlight.length ? Math.round(inFlight.reduce((s,a) => s + prog(a), 0) / inFlight.length) : 0;
   const blocked = A.filter(isBlocked), over = A.filter(isOver), crit = A.filter(a => a.critica && !isDone(a));
   const openAg = S.agreements.filter(x => !x.done);
   const sis = {}; A.forEach(a => { const k = a.sistema || 'Sin sistema'; (sis[k] = sis[k] || {t:0,d:0}).t++; if(isDone(a)) sis[k].d++; });
@@ -884,7 +891,7 @@ function vTablero(){
       </svg>
       <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
         <b style="font:700 24px/1 var(--f-display);color:var(--ink)">${nf(avg)}%</b>
-        <span style="font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;font-weight:600">Avance Real</span>
+        <span style="font-size:10px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;font-weight:600">Avance Global</span>
       </div>
     </div>
     <div style="display:grid;gap:8px;font-size:13px;min-width:145px">
@@ -928,8 +935,10 @@ function vTablero(){
     <div class="hero">
       <div>
         <div class="big">${nf(avg)}<small>%</small></div>
-        <div class="note">avance promedio global (${n} actividades)</div>
-        ${inFlight.length ? `<div style="font-size:12px;color:var(--muted);margin-top:4px"><b>${inFlightAvg}%</b> promedio en actividades en curso (${inFlight.length} entre Próxima entrega y En proceso)</div>` : ''}
+        <div class="note"><b>Avance Global del Proyecto</b> (${n} actividades)</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">
+          Promedio global sobre el 100% de las actividades: completadas (100%), próximas entregas con porcentaje de avance y en proceso.
+        </div>
       </div>
       <div><div class="seg">${seg}</div><div class="legend">${leg}</div></div>
     </div>
