@@ -1344,11 +1344,11 @@ function vBitacora(){
     </tbody></table></div>
   </div>
 
-  <!-- Sección 2: Actividades Completadas / Entregadas (Separadas visualmente al final) -->
+  <!-- Sección 2: Actividades Completadas (Separadas visualmente al final) -->
   <div class="panel" style="border-top:3px solid var(--ok);background:rgba(22,163,74,0.02)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <h3 style="margin:0;font-size:16px;color:var(--ok);text-transform:none;letter-spacing:0">
-        ✓ Actividades Completadas / Entregadas (${doneItems.length})
+        ✓ Actividades Completadas
       </h3>
       <span class="pill s-ok" style="font-size:11px">${doneItems.length} finalizadas</span>
     </div>
@@ -1581,7 +1581,7 @@ function makePDF(m){
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
-  doc.text('PROFALCA · PLANTA DE POLIPROPILENO', M + 14, y + 16);
+  doc.text('PROFALCA', M + 14, y + 16);
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
@@ -1599,7 +1599,7 @@ function makePDF(m){
     [
       { content: `Fecha de Reunión: ${fLong(m.fecha)}`, styles: { fontStyle: 'bold' } },
       { content: `Próxima Reunión: ${m.proxima ? fLong(m.proxima) : 'Por definir'}`, styles: { fontStyle: 'bold' } },
-      { content: `Responsable: ${m.responsable || 'Gelsy Sonnessa'}`, styles: { fontStyle: 'bold' } }
+      { content: `Responsable del reporte: ${m.responsable || 'Gelsy Sonnessa'}`, styles: { fontStyle: 'bold' } }
     ],
     [
       { content: `Participantes: ${(m.participantes || []).join(', ') || 'No registrados'}`, colSpan: 3 }
@@ -1645,28 +1645,29 @@ function makePDF(m){
     doc.setFontSize(8.5);
     doc.setTextColor(60, 50, 30);
     doc.text(notaLines, M + 12, y + 23, { align: 'justify', maxWidth: MW - 24 });
-    y += notaH + 12;
+    y += notaH + 14;
   }
 
   // 4. SECCIÓN 1: RESUMEN DE LO TRATADO (Texto Justificado)
   const s = m.secs || [];
   if (s.length) {
-    need(35);
+    need(45);
     doc.setFillColor(235, 243, 248);
-    doc.rect(M, y, MW, 20, 'F');
+    doc.rect(M, y, MW, 22, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(7, 56, 78);
-    doc.text('1. RESUMEN DE LO TRATADO', M + 8, y + 14);
-    y += 26;
+    doc.text('1. RESUMEN DE LO TRATADO', M + 8, y + 15);
+    y += 34; // Espacio limpio de 12pt tras el rectángulo de 22pt para evitar montura
 
     s.forEach((sec, idx) => {
-      need(25);
+      // Evitar títulos huérfanos al final de página (exige espacio para título + al menos 2 líneas de texto)
+      need(65);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
       doc.setTextColor(11, 86, 120);
       doc.text(`1.${idx + 1}. ${sec.t}`, M, y);
-      y += 12;
+      y += 14;
 
       const pList = String(sec.b || '').split('\n');
       pList.forEach(rawP => {
@@ -1682,7 +1683,7 @@ function makePDF(m){
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(30, 41, 59);
           doc.text(lines, M + 16, y + 8, { maxWidth: MW - 16, align: 'justify' });
-          y += lines.length * 11 + 3;
+          y += lines.length * 11 + 4;
         } else if (rawP.trim()) {
           const lines = doc.splitTextToSize(rawP.trim(), MW);
           need(lines.length * 11 + 6);
@@ -1693,7 +1694,7 @@ function makePDF(m){
           y += lines.length * 11 + 6;
         }
       });
-      y += 6;
+      y += 8;
     });
   }
 
@@ -1701,14 +1702,14 @@ function makePDF(m){
   const ags = S.agreements.filter(x => x.meetingId === m._id).sort((a,b)=>(a.ord||0)-(b.ord||0));
   let secNum = 2;
   if (ags.length) {
-    need(40);
+    need(55);
     doc.setFillColor(235, 243, 248);
-    doc.rect(M, y, MW, 20, 'F');
+    doc.rect(M, y, MW, 22, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.setTextColor(7, 56, 78);
-    doc.text(`${secNum++}. COMPROMISOS Y ACCIONES PARA LA PRÓXIMA REUNIÓN${m.proxima ? ' (' + fShort(m.proxima) + ')' : ''}`, M + 8, y + 14);
-    y += 24;
+    doc.text(`${secNum++}. COMPROMISOS Y ACCIONES PARA LA PRÓXIMA REUNIÓN${m.proxima ? ' (' + fShort(m.proxima) + ')' : ''}`, M + 8, y + 15);
+    y += 32;
 
     doc.autoTable({
       startY: y,
@@ -1750,7 +1751,7 @@ function makePDF(m){
     doc.text('REPORTE SEMANAL DE ESTADO (RSE) | PRE-ARRANQUE PROFALCA', M2 + 12, y2 + 15);
     doc.setFontSize(8.5);
     doc.setTextColor(168, 209, 226);
-    doc.text('Matriz de avance de actividades, compromisos técnicos y ruta crítica', M2 + 12, y2 + 27);
+    doc.text('Matriz de avance de actividades / plan de trabajo', M2 + 12, y2 + 27);
     y2 += 40;
 
     doc.autoTable({
