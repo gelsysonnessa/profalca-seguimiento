@@ -865,9 +865,9 @@ function vTablero(){
     <p class="muted" style="max-width:540px;margin:0 auto 20px">Tu base de datos en Firebase está activa y lista. Haz clic en el botón para cargar todas las 40 actividades, bitácoras y acuerdos que tenías en el sistema.</p>
     <button class="btn pri" data-a="seedData" style="font-size:16px;padding:10px 24px">🚀 Cargar todas las actividades y datos de PROFALCA ahora</button>
   </div>`;
-  const n = 40; // Base oficial de 40 actividades PROFALCA
+  const n = A.length || 1;
   const cnt = {}; ACT_EST.forEach(e => cnt[e] = A.filter(a => a.estatus === e).length);
-  const avg = A.reduce((s,a) => s + prog(a), 0) / 40;
+  const avg = A.reduce((s,a) => s + prog(a), 0) / n;
   const blocked = A.filter(isBlocked), over = A.filter(isOver), crit = A.filter(a => a.critica && !isDone(a));
   const openAg = S.agreements.filter(x => !x.done);
   const sis = {}; A.forEach(a => { const k = a.sistema || 'Sin sistema'; (sis[k] = sis[k] || {t:0,d:0}).t++; if(isDone(a)) sis[k].d++; });
