@@ -568,7 +568,7 @@ const isBlocked = a => !isDone(a) && (a.estatus === 'Bloqueado' || !!a.bloqueo);
 const sortedEntries = mid => S.entries.filter(e => e.meetingId === mid).sort((a,b) => {
   const diff = statusRank(a.estatus) - statusRank(b.estatus);
   if(diff !== 0) return diff;
-  return (a.ord??0)-(b.ord??0) || actNum(a.actId)-actNum(b.actId);
+  return actNum(a.actId) - actNum(b.actId) || (a.ord??0)-(b.ord??0);
 });
 
 /* ---------- Mensajes y Notificaciones ---------- */
@@ -1147,10 +1147,10 @@ function tPlanTrabajo(m, ents){
     <div class="row" style="justify-content:space-between;margin-bottom:12px;align-items:flex-start">
       <div>
         <h3 style="margin:0;color:var(--ink);font-size:18px">Plan de Trabajo para la Próxima Reunión (RSE)</h3>
-        <p class="note" style="margin:2px 0 0">Compromisos y entregables semanales. Cada actividad que actualices aquí se refleja <b>automáticamente</b> en el Tablero general, en Actividades y en la pestaña de Acuerdos.</p>
+        <p class="note" style="margin:2px 0 0">Compromisos y entregables semanales. Cada actividad que actualices aquí se refleja <b>automáticamente</b> en el Tablero general, en Actividades y en la pestaña de Bitácora de reuniones.</p>
       </div>
       <div class="row">
-        <button class="btn" data-a="carry">Traer pendientes reunión anterior</button>
+        <button class="btn" data-a="carry">Traer actividades en proceso</button>
         <button class="btn pri" data-a="addEnt">+ Agregar actividad al plan</button>
       </div>
     </div>
@@ -1323,9 +1323,9 @@ function vBitacora(){
   const renderTableRows = (items, isDoneSection) => items.map(x => `
     <tr class="${isDoneSection ? 'muted' : ''}" style="${isDoneSection ? 'background:rgba(22,163,74,0.02)' : ''}">
       <td class="mono" style="white-space:nowrap">${x.meetingDate ? (x.meetingNum ? 'Minuta '+x.meetingNum+' · ' : '') + fShort(x.meetingDate) : '—'}</td>
-      <td>${x.actId ? `<button class="btn sm" data-a="openAct" data-id="${x.actId}" style="font-weight:700;color:var(--accent);font-family:var(--f-mono)">${esc(x.actId)}</button>` : '<span class="mono muted">GRAL</span>'}</td>
+      <td>${x.actId ? `<button class="btn sm" data-a="openAct" data-id="${x.actId}" style="font-weight:700;color:var(--accent);font-family:var(--f-mono)">${esc(x.actId)}</button>` : `<button class="btn sm" data-a="editAgr" data-id="${x.agrId}" title="Clic para editar compromiso general" style="font-weight:700;color:var(--accent);font-family:var(--f-mono)">GRAL ✏️</button>`}</td>
       <td style="min-width:210px;${isDoneSection?'text-decoration:line-through;color:var(--muted)':''}">
-        <b>${esc(x.title)}</b>
+        ${x.type === 'agr' ? `<a href="#" data-a="editAgr" data-id="${x.agrId}" style="color:inherit;text-decoration:none" title="Clic para editar compromiso general"><b>${esc(x.title)}</b></a>` : `<b>${esc(x.title)}</b>`}
         ${x.sistema ? `<div class="note" style="font-size:11.5px">${esc(x.sistema)}</div>` : ''}
       </td>
       <td style="min-width:250px;font-size:13.5px">${esc(x.detail)}</td>
@@ -1537,12 +1537,13 @@ function entModal(id){
   const m = curMeet(), e = id ? S.entries.find(x => x._id === id) : null;
   const used = new Set(S.entries.filter(x => x.meetingId === m._id).map(x => x.actId));
   const av = sortedActs().filter(a => !used.has(a._id) || (e && e.actId === a._id));
-  const act = e ? actById(e.actId) : null;
+  const defaultAct = av[0] || null;
+  const act = e ? actById(e.actId) : defaultAct;
   const currAvance = act ? prog(act) : (e && e.avance != null ? e.avance : '');
-  const v = e || { estatus: 'Próxima entrega', nota: '', fecha: '', avance: '' };
+  const v = e || { estatus: act ? act.estatus : 'Próxima entrega', nota: act ? (act.bloqueo || act.riesgo || '') : '', fecha: '', avance: currAvance };
   
   openModal(e ? 'Editar actividad en el Plan de Trabajo (RSE)' : 'Agregar actividad al Plan de Trabajo (RSE)', `<div class="form">
-   <div class="f"><label>Actividad</label><select id="f_act" ${e?'disabled':''}>${av.map(a => `<option value="${a._id}" ${e&&e.actId===a._id?'selected':''}>${a._id} · ${esc(a.title)}</option>`).join('')}</select></div>
+   <div class="f"><label>Actividad</label><select id="f_act" ${e?'disabled':''}>${av.map(a => `<option value="${a._id}" ${((e && e.actId===a._id) || (!e && defaultAct && defaultAct._id===a._id))?'selected':''}>${a._id} · ${esc(a.title)}</option>`).join('')}</select></div>
    <div class="f t"><label>Estatus en el RSE</label><select id="f_est">${ENT_EST.map(x => `<option ${v.estatus===x?'selected':''}>${x}</option>`).join('')}</select></div>
    <div class="f t"><label>Avance %</label><input id="f_av" type="number" min="0" max="100" placeholder="0 - 100" value="${currAvance}"></div>
    <div class="f t"><label>Fecha límite / acción</label><input id="f_fecha" type="date" value="${esc(v.fecha)}"></div>
@@ -1578,26 +1579,86 @@ function entModal(id){
 
     toast('Actividad guardada y sincronizada automáticamente');
   }, e ? { del: async () => { await wdel('entries', e._id, `Quitó ${e.actId} del plan de trabajo ${fShort(m.fecha)}`); } } : null);
+
+  const selAct = $('#f_act');
+  if(selAct && !e){
+    selAct.onchange = () => {
+      const a = actById(selAct.value);
+      if(a){
+        if($('#f_est')) $('#f_est').value = a.estatus || 'Próxima entrega';
+        if($('#f_av')) $('#f_av').value = prog(a) || '';
+        if($('#f_nota') && !$('#f_nota').value) $('#f_nota').value = a.bloqueo || a.riesgo || '';
+      }
+    };
+  }
 }
 
 async function carry(){
-  const m = curMeet(), prev = sortedMeets().find(x => x.fecha < m.fecha);
-  if(!prev){ toast('No se encontró una reunión anterior.'); return; }
+  const m = curMeet();
+  if(!m){ toast('No se encontró la reunión activa.'); return; }
   const have = new Set(S.entries.filter(x => x.meetingId === m._id).map(x => x.actId));
-  const src = sortedEntries(prev._id).filter(e => e.estatus !== 'Completado' && !have.has(e.actId));
-  if(!src.length){ toast('No hay actividades pendientes por traer.'); return; }
+  
+  // Reunir actividades en proceso / seguimiento que no estén en la reunión actual
+  const candidateIds = new Set();
+  
+  // 1. Actividades de minutas anteriores que no están completadas
+  const prevMeets = sortedMeets().filter(x => x.fecha < m.fecha);
+  for (const pm of prevMeets) {
+    for (const pe of S.entries.filter(x => x.meetingId === pm._id)) {
+      if (pe.actId && !have.has(pe.actId)) {
+        const a = actById(pe.actId);
+        const est = a ? a.estatus : pe.estatus;
+        if (est !== 'Completado') {
+          candidateIds.add(pe.actId);
+        }
+      }
+    }
+  }
+  
+  // 2. Actividades de la lista maestra que estén 'Próxima entrega', 'En proceso' o 'Bloqueado'
+  for (const a of S.acts) {
+    if (!have.has(a._id) && (a.estatus === 'Próxima entrega' || a.estatus === 'En proceso' || a.estatus === 'Bloqueado')) {
+      candidateIds.add(a._id);
+    }
+  }
+  
+  if(!candidateIds.size){ toast('No hay actividades en proceso o pendientes por traer.'); return; }
+  
+  // Ordenar por prioridad de estatus y luego por número de actividad ACT-01, ACT-02...
+  const sortedIds = [...candidateIds].sort((idA, idB) => {
+    const a = actById(idA), b = actById(idB);
+    const estA = a ? a.estatus : 'En proceso', estB = b ? b.estatus : 'En proceso';
+    const sDiff = statusRank(estA) - statusRank(estB);
+    if (sDiff !== 0) return sDiff;
+    return actNum(idA) - actNum(idB);
+  });
+  
   let o = Math.max(0, ...S.entries.filter(x => x.meetingId === m._id).map(x => x.ord || 0));
   try {
-    for(const e of src){
-      await wset('entries', rid('e-'), { meetingId: m._id, actId: e.actId, estatus: e.estatus, fecha: '', nota: e.nota, ord: ++o });
+    for(const actId of sortedIds){
+      const a = actById(actId);
+      const latestE = S.entries.filter(x => x.actId === actId).sort((x,y) => (y.ord||0)-(x.ord||0))[0];
+      const estatus = a ? a.estatus : (latestE ? latestE.estatus : 'En proceso');
+      const avance = a ? prog(a) : (latestE && latestE.avance != null ? latestE.avance : 0);
+      const nota = (latestE ? latestE.nota : '') || (a ? (a.bloqueo || a.riesgo || '') : '');
+      await wset('entries', rid('e-'), {
+        meetingId: m._id,
+        actId: actId,
+        estatus: estatus,
+        avance: avance,
+        fecha: (latestE ? latestE.fecha : '') || '',
+        nota: nota,
+        ord: ++o
+      });
     }
-    logc(`Trajo ${src.length} pendientes a la bitácora ${fShort(m.fecha)}`);
-    toast(`${src.length} actividades traídas. Puedes actualizar sus notas.`);
+    logc(`Trajo ${sortedIds.length} actividades en proceso al plan de trabajo ${fShort(m.fecha)}`);
+    toast(`${sortedIds.length} actividades en proceso traídas con su avance actualizado.`);
   } catch(x){ fail(x); }
 }
 
 function agrModal(id, kind){
-  const m = curMeet(), x = id ? S.agreements.find(a => a._id === id) : null;
+  const x = id ? S.agreements.find(a => a._id === id) : null;
+  const m = x ? (S.meetings.find(meet => meet._id === x.meetingId) || curMeet()) : curMeet();
   const k = x ? x.kind : (kind || 'acuerdo');
   const v = x || { texto:'', cond:'', resp:'', fecha: m && m.proxima ? m.proxima : '', done: false, kind: k };
   openModal(x ? 'Editar compromiso' : 'Nuevo compromiso / acción para la próxima reunión', `<div class="form">
@@ -1612,16 +1673,17 @@ function agrModal(id, kind){
    <div class="f"><label>Condición / Descripción del entregable</label><textarea id="f_cd" style="min-height:65px">${esc(v.cond)}</textarea></div>
    <div class="f h"><label>Fecha límite</label><input id="f_fc" type="date" value="${esc(v.fecha)}"></div>
    <div class="f h" style="align-self:center"><label class="ck" style="margin-top:14px"><input id="f_dn" type="checkbox" ${v.done?'checked':''}> Cumplido</label></div></div>`, async () => {
-    const d = { meetingId: m._id, kind: $('#f_kd').value, texto:$('#f_tx').value.trim(), cond:$('#f_cd').value.trim(), resp:$('#f_rs').value.trim(), fecha:$('#f_fc').value, done:$('#f_dn').checked };
+    const meetId = (x && x.meetingId) ? x.meetingId : (m ? m._id : '');
+    const d = { meetingId: meetId, kind: $('#f_kd').value, texto:$('#f_tx').value.trim(), cond:$('#f_cd').value.trim(), resp:$('#f_rs').value.trim(), fecha:$('#f_fc').value, done:$('#f_dn').checked };
     if(!d.texto) throw new Error('Escribe el acuerdo.');
     if(x){
-      await wupd('agreements', x._id, d, `Editó un acuerdo (${fShort(m.fecha)})`);
+      await wupd('agreements', x._id, d, `Editó un acuerdo general (${fShort(m ? m.fecha : today())})`);
     } else {
-      d.ord = Math.max(0, ...S.agreements.filter(a => a.meetingId === m._id && a.kind === k).map(a => a.ord || 0)) + 1;
-      await wset('agreements', rid('a-'), d, `Agregó un acuerdo (${fShort(m.fecha)})`);
+      d.ord = Math.max(0, ...S.agreements.filter(a => a.meetingId === meetId && a.kind === k).map(a => a.ord || 0)) + 1;
+      await wset('agreements', rid('a-'), d, `Agregó un acuerdo general (${fShort(m ? m.fecha : today())})`);
     }
     toast('Acuerdo guardado');
-  }, x ? { del: async () => { await wdel('agreements', x._id, `Eliminó un acuerdo (${fShort(m.fecha)})`); } } : null);
+  }, x ? { del: async () => { await wdel('agreements', x._id, `Eliminó un acuerdo general (${fShort(m ? m.fecha : today())})`); toast('Acuerdo eliminado'); } } : null);
 }
 
 /* ---------- Generadores de PDF y Excel ---------- */
@@ -2100,13 +2162,32 @@ const A = {
     try {
       const newEst = el.checked ? 'Completado' : 'En proceso';
       const entry = S.entries.find(x => x._id === d.id);
-      await wupd('entries', d.id, { estatus: newEst }, el.checked ? 'Marcó actividad RSE como completada' : 'Reabrió actividad RSE');
+      const act = entry && entry.actId ? actById(entry.actId) : null;
+      
+      const actUp = { estatus: newEst };
+      const entryUp = { estatus: newEst };
+      
+      if (el.checked) {
+        const prevAv = (entry && entry.avance != null && entry.avance < 100)
+          ? entry.avance
+          : (act && act.avance != null && act.avance < 100 ? act.avance : (act && act.prevAvance != null ? act.prevAvance : 50));
+        entryUp.prevAvance = prevAv;
+        actUp.prevAvance = prevAv;
+        actUp.avance = 100;
+        entryUp.avance = 100;
+      } else {
+        const restoredAvance = (entry && entry.prevAvance != null)
+          ? entry.prevAvance
+          : (act && act.prevAvance != null ? act.prevAvance : (entry && entry.avance != null && entry.avance < 100 ? entry.avance : (act && act.avance != null && act.avance < 100 ? act.avance : 50)));
+        entryUp.avance = restoredAvance;
+        actUp.avance = restoredAvance;
+      }
+      
+      await wupd('entries', d.id, entryUp, el.checked ? 'Marcó actividad RSE como completada' : 'Reabrió actividad RSE');
       if (entry && entry.actId) {
-        const actUp = { estatus: newEst };
-        if (el.checked) actUp.avance = 100;
         await wupd('acts', entry.actId, actUp, `Sincronizó estatus de ${entry.actId} a ${newEst}`);
       }
-      toast(el.checked ? 'Actividad marcada como completada (100%)' : 'Actividad reabierta');
+      toast(el.checked ? 'Actividad marcada como completada (100%)' : `Actividad reabierta con su avance previo (${actUp.avance}%)`);
     } catch(e){ fail(e); }
   },
   pdf: doPDF, copy: doCopy, xlsx: doXlsx,
