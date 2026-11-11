@@ -148,7 +148,7 @@
   .paper th{background:var(--paper-head);color:var(--paper-ink);border:1px solid var(--paper-line);font:700 12px Arial,sans-serif;letter-spacing:0;text-transform:none;white-space:normal}
   .paper td{border:1px solid var(--paper-line);vertical-align:top}
   .paper .hd{background:var(--paper-head);border:1px solid var(--paper-line);padding:8px 10px;font-weight:700;text-align:center;margin-top:26px}
-  .paper .nota{border:1px solid var(--paper-line);padding:8px 12px;margin:10px 0;text-align:justify;text-justify:inter-word}
+  .paper .nota{border:1px solid var(--paper-line);padding:8px 12px;margin:10px 0;text-align:left;line-height:1.45}
   #modal{position:fixed;inset:0;z-index:50;background:rgba(8,16,22,.55);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
   #modal.on{display:flex}
   .dlg{background:var(--surface);border:1px solid var(--line);width:min(720px,100%);padding:20px;margin-block:auto}
@@ -1773,7 +1773,7 @@ function makePDF(m){
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(60, 50, 30);
-    doc.text(notaLines, M + 12, y + 23, { align: 'justify', maxWidth: MW - 24 });
+    doc.text(notaLines, M + 12, y + 23, { align: 'left' });
     y += notaH + 14;
   }
 
