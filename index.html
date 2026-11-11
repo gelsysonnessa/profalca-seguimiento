@@ -1124,13 +1124,33 @@ function vMeets(){
 }
 
 function bodyHTML(t){
-  const lines = String(t||'').split('\n'); let out = '', ul = false;
-  for(const l of lines){
-    const b = /^\s*[-•●]\s+(.*)$/.exec(l);
-    if(b){ if(!ul){ out += '<ul>'; ul = true; } out += `<li>${esc(b[1])}</li>`; }
-    else{ if(ul){ out += '</ul>'; ul = false; } if(l.trim()) out += `<p>${esc(l)}</p>`; }
+  const rawBlocks = String(t||'').split(/\n\s*\n/);
+  let out = '';
+  for(const block of rawBlocks){
+    const lines = block.split('\n');
+    let inList = false;
+    let pBuffer = [];
+    const flushP = () => {
+      if(pBuffer.length){
+        out += `<p>${esc(pBuffer.join(' '))}</p>`;
+        pBuffer = [];
+      }
+    };
+    for(const l of lines){
+      const b = /^\s*[-•●]\s+(.*)$/.exec(l);
+      if(b){
+        flushP();
+        if(!inList){ out += '<ul>'; inList = true; }
+        out += `<li>${esc(b[1])}</li>`;
+      } else {
+        if(inList){ out += '</ul>'; inList = false; }
+        if(l.trim()) pBuffer.push(l.trim());
+      }
+    }
+    flushP();
+    if(inList) out += '</ul>';
   }
-  if(ul) out += '</ul>'; return out;
+  return out;
 }
 
 function tResumen(m){
@@ -1756,28 +1776,69 @@ function makePDF(m){
 
   // 3. NOTA IMPORTANTE (Si existe)
   if (m.nota) {
-    need(40);
-    const notaLines = doc.splitTextToSize(m.nota, MW - 24);
-    const notaH = notaLines.length * 11 + 20;
-    need(notaH);
+    need(45);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+
+    // Separar por bloques de párrafo y normalizar líneas continuas para abarcar todo el ancho del cuadro
+    const rawBlocks = String(m.nota).split(/\n\s*\n/).map(b => b.trim()).filter(Boolean);
+    const paraLines = [];
+    const lineH = 11.5;
+    const pGap = 6;
+    let totalTextH = 0;
+
+    rawBlocks.forEach((block, bIdx) => {
+      const bLines = block.split('\n');
+      const hasBullet = bLines.some(l => /^\s*[-•●*]/.test(l));
+      if (hasBullet) {
+        bLines.forEach(l => {
+          if (l.trim()) {
+            const splitL = doc.splitTextToSize(l.trim(), MW - 24);
+            paraLines.push({ lines: splitL, isLastOfBlock: false });
+            totalTextH += splitL.length * lineH;
+          }
+        });
+        if (bIdx < rawBlocks.length - 1) {
+          totalTextH += pGap;
+          if (paraLines.length) paraLines[paraLines.length - 1].isLastOfBlock = true;
+        }
+      } else {
+        const cleanPara = bLines.map(l => l.trim()).filter(Boolean).join(' ');
+        const splitL = doc.splitTextToSize(cleanPara, MW - 24);
+        paraLines.push({ lines: splitL, isLastOfBlock: bIdx < rawBlocks.length - 1 });
+        totalTextH += splitL.length * lineH + (bIdx < rawBlocks.length - 1 ? pGap : 0);
+      }
+    });
+
+    const topPad = 22;
+    const bottomPad = 10;
+    const notaH = totalTextH + topPad + bottomPad;
+
+    need(notaH + 10);
     doc.setFillColor(254, 243, 199);
     doc.rect(M, y, MW, notaH, 'F');
     doc.setFillColor(217, 119, 6);
     doc.rect(M, y, 4, notaH, 'F');
-    
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(180, 83, 9);
-    doc.text('NOTA IMPORTANTE:', M + 12, y + 12);
-    
+    doc.text('NOTA IMPORTANTE:', M + 12, y + 13);
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(60, 50, 30);
-    doc.text(notaLines, M + 12, y + 23, { align: 'left' });
+
+    let curY = y + topPad + 2;
+    paraLines.forEach(item => {
+      doc.text(item.lines, M + 12, curY, { align: 'left' });
+      curY += item.lines.length * lineH + (item.isLastOfBlock ? pGap : 0);
+    });
+
     y += notaH + 14;
   }
 
-  // 4. SECCIÓN 1: RESUMEN DE LO TRATADO (Texto Justificado)
+  // 4. SECCIÓN 1: RESUMEN DE LO TRATADO
   const s = m.secs || [];
   if (s.length) {
     need(45);
@@ -1787,40 +1848,55 @@ function makePDF(m){
     doc.setFontSize(10.5);
     doc.setTextColor(7, 56, 78);
     doc.text('1. RESUMEN DE LO TRATADO', M + 8, y + 15);
-    y += 34; // Espacio limpio de 12pt tras el rectángulo de 22pt para evitar montura
+    y += 32;
 
     s.forEach((sec, idx) => {
-      // Evitar títulos huérfanos al final de página (exige espacio para título + al menos 2 líneas de texto)
+      // Separación consistente antes de cada nuevo punto (1.2, 1.3, etc.)
+      if (idx > 0) {
+        y += 14;
+      }
+
+      // Evitar títulos huérfanos al final de página
       need(65);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.5);
       doc.setTextColor(11, 86, 120);
       doc.text(`1.${idx + 1}. ${sec.t}`, M, y);
-      y += 14;
+      y += 12;
 
-      const pList = String(sec.b || '').split('\n');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      const pList = String(sec.b || '').split('\n').filter(p => p.trim());
       pList.forEach(rawP => {
         const bulletMatch = /^\s*[-•●]\s+(.*)$/.exec(rawP);
         if (bulletMatch) {
           const bText = bulletMatch[1];
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
           const lines = doc.splitTextToSize(bText, MW - 16);
-          need(lines.length * 11 + 4);
+          const blockH = lines.length * 11 + 5;
+          need(blockH);
+
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(9);
           doc.setTextColor(11, 86, 120);
           doc.text('•', M + 6, y + 8);
+
           doc.setFont('helvetica', 'normal');
           doc.setTextColor(30, 41, 59);
           doc.text(lines, M + 16, y + 8, { maxWidth: MW - 16, align: 'justify' });
-          y += lines.length * 11 + 4;
-        } else if (rawP.trim()) {
-          const lines = doc.splitTextToSize(rawP.trim(), MW);
-          need(lines.length * 11 + 6);
+          y += blockH;
+        } else {
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(9);
+          const lines = doc.splitTextToSize(rawP.trim(), MW);
+          const blockH = lines.length * 11 + 5;
+          need(blockH);
+
           doc.setTextColor(30, 41, 59);
           doc.text(lines, M, y + 8, { maxWidth: MW, align: 'justify' });
-          y += lines.length * 11 + 6;
+          y += blockH;
         }
       });
       y += 8;
